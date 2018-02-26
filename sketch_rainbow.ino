@@ -1,11 +1,12 @@
-
 #include <Adafruit_CircuitPlayground.h>
+#include <stdio.h>
 #include <math.h>
 #include <stdbool.h>
 #define PI 3.14159265358979323846
 
 void setup() {
     CircuitPlayground.begin();
+    Serial.begin(9600);
 }
 
 int sinCalc(double x) {
@@ -32,19 +33,20 @@ void lightColorChanger(int i, int n) {
 
 void loop() {
     int speed = 1;
+    int brightness = 64;
     bool timeout = true;
     while (true) {
-        for (int i=0; i<360; i+=speed) {
+        for (int i=0; i<360; i+=10) {
             CircuitPlayground.clearPixels();
+            //CircuitPlayground.setBrightness((sinCalc(i)/4)+16);
             for (int j=0; j<10; j++) {
                 lightColorChanger(i, j);
             }
-            // CircuitPlayground.setBrightness(i*255/360);
 
             delay(5);
             if (timeout) {
                 if (CircuitPlayground.leftButton()) {
-                    if (speed < 5) {
+                    if (speed < 10) {
                         speed++;
                     }
                 }
@@ -55,6 +57,30 @@ void loop() {
                 }
                 timeout = false;
             }
+
+            uint16_t spectrum[32];
+            int avg = 0;
+            CircuitPlayground.mic.fft(spectrum);
+            for(int k=0; k < 32; k++) {             // Add for an average
+                if(spectrum[k] > 255) {
+                    spectrum[k] = 255; // limit outlier data
+                }
+                avg += spectrum[k];
+            }
+            avg/=32;
+
+            CircuitPlayground.setBrightness((avg-16)+16);
+
+            // for (int a = 0; i<32; a++) {
+            //     Serial.print(a);
+            //     Serial.print(":");
+            //     Serial.print(spectrum[a]);
+            //     Serial.print("   ");
+            //
+            // }
+            // Serial.println("");
+            // Serial.print("Average: ");
+            // Serial.println(avg);
         }
         timeout = true;
     }
