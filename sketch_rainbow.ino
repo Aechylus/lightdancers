@@ -1,6 +1,7 @@
 
 #include <Adafruit_CircuitPlayground.h>
 #include <math.h>
+#include <stdbool.h>
 #define PI 3.14159265358979323846
 
 void setup() {
@@ -19,7 +20,7 @@ int sinCalc(double x) {
     return (int)scaled;
 }
 
-void lightColorChanger(int n, int i) {
+void lightColorChanger(int i, int n) {
     int offset = 120;
     int shift = n*36;
     int red = sinCalc(i+shift);
@@ -30,21 +31,31 @@ void lightColorChanger(int n, int i) {
 }
 
 void loop() {
-    for (int i=0; i<360; i+=4) {
-        CircuitPlayground.clearPixels();
-        // CircuitPlayground.setBrightness(i*255/360);
+    int speed = 1;
+    bool timeout = true;
+    while (true) {
+        for (int i=0; i<360; i+=speed) {
+            CircuitPlayground.clearPixels();
+            for (int j=0; j<10; j++) {
+                lightColorChanger(i, j);
+            }
+            // CircuitPlayground.setBrightness(i*255/360);
 
-        lightColorChanger(0, i);
-        lightColorChanger(1, i);
-        lightColorChanger(2, i);
-        lightColorChanger(3, i);
-        lightColorChanger(4, i);
-        lightColorChanger(5, i);
-        lightColorChanger(6, i);
-        lightColorChanger(7, i);
-        lightColorChanger(8, i);
-        lightColorChanger(9, i);
-
-        delay(5);
+            delay(5);
+            if (timeout) {
+                if (CircuitPlayground.leftButton()) {
+                    if (speed < 5) {
+                        speed++;
+                    }
+                }
+                if (CircuitPlayground.rightButton()) {
+                    if (speed > 1) {
+                        speed--;
+                    }
+                }
+                timeout = false;
+            }
+        }
+        timeout = true;
     }
 }
