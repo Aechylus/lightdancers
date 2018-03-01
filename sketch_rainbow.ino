@@ -5,9 +5,26 @@
 #include <stdint.h>
 #define PI 3.14159265358979323846
 #define TIME_STEP 5
+#define BUTTON_DELAY 250
+
+int speed;
+int count;
+unsigned long previousMillisLED;
+unsigned long previousMillisSpeed;
+unsigned long currentMillis;
 
 void setup() {
     CircuitPlayground.begin();
+
+    speed = 3;
+    count = 0;
+    previousMillisLED = 0;
+    previousMillisSpeed = 0;
+    currentMillis = 0;
+
+    uint16_t spectrum[32];
+    int avg = 0;
+    CircuitPlayground.mic.fft(spectrum);
     //Serial.begin(9600);
 }
 
@@ -34,56 +51,49 @@ void lightColorChanger(int i, int n) {
 }
 
 void loop() {
-    int speed = 3;
-    int count = 0;
-    unsigned long previousMillisLED = 0;
-    unsigned long previousMillisSpeed = 0;
-    unsigned long currentMillis = 0;
-    while (true) {
-        // for (int i=0; i<360; i+=3) {
-        currentMillis = millis();
-        if (currentMillis - previousMillisLED >= TIME_STEP) {
-            previousMillisLED = currentMillis;
+    // for (int i=0; i<360; i+=3) {
+    currentMillis = millis();
+    if (currentMillis - previousMillisLED >= TIME_STEP) {
+        previousMillisLED = currentMillis;
 
-            CircuitPlayground.clearPixels();
-            for (int n=0; n<10; n++) {
-                lightColorChanger(count, n);
-            }
-            count += speed;
-            if (count >= 360) {
-                count = 0;
-            }
+        CircuitPlayground.clearPixels();
+        for (int n=0; n<10; n++) {
+            lightColorChanger(count, n);
         }
-
-        if (currentMillis - previousMillisSpeed >= 500) {
-            previousMillisSpeed = currentMillis;
-
-            if (CircuitPlayground.leftButton()) {
-                if (speed < 10) {
-                    speed++;
-                }
-            }
-            if (CircuitPlayground.rightButton()) {
-                if (speed > 1) {
-                    speed--;
-                }
-            }
+        count += speed;
+        if (count >= 360) {
+            count = 0;
         }
-
-        uint16_t spectrum[32];
-        int avg = 0;
-        CircuitPlayground.mic.fft(spectrum);
-        //creating rolling average
-
-
-        // for(int k=0; k < 32; k++) {// Add for an average
-        //     if(spectrum[k] > 255) {
-        //         spectrum[k] = 255; // limit outlier data
-        //     }
-        //     avg += spectrum[k];
-        // }
-        // avg/=32;
-
-        CircuitPlayground.setBrightness(abs(avg-16)+8);
     }
+
+    if (currentMillis - previousMillisSpeed >= BUTTON_DELAY) {
+        previousMillisSpeed = currentMillis;
+
+        if (CircuitPlayground.leftButton()) {
+            if (speed < 10) {
+                speed++;
+            }
+        }
+        if (CircuitPlayground.rightButton()) {
+            if (speed > 1) {
+                speed--;
+            }
+        }
+    }
+
+    uint16_t spectrum[32];
+    int avg = 0;
+    CircuitPlayground.mic.fft(spectrum);
+    //creating rolling average
+
+
+    // for(int k=0; k < 32; k++) {// Add for an average
+    //     if(spectrum[k] > 255) {
+    //         spectrum[k] = 255; // limit outlier data
+    //     }
+    //     avg += spectrum[k];
+    // }
+    // avg/=32;
+
+    CircuitPlayground.setBrightness(abs(avg-16)+8);
 }
