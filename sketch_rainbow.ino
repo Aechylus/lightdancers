@@ -1,12 +1,14 @@
 #include <Adafruit_CircuitPlayground.h>
+#include <stdlib.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 #define PI 3.14159265358979323846
+#define TIME_STEP 5
 
 void setup() {
     CircuitPlayground.begin();
-    Serial.begin(9600);
+    //Serial.begin(9600);
 }
 
 int sinCalc(double x) {
@@ -32,45 +34,57 @@ void lightColorChanger(int i, int n) {
 }
 
 void loop() {
-    int speed = 1;
-    int brightness = 64;
+    int speed = 3;
     bool timeout = true;
+    int count = 0;
+    unsigned long previousMillisLED = 0;
+    unsigned long previousMillisSpeed = 0;
+    unsigned long currentMillis = 0;
     while (true) {
-        for (int i=0; i<360; i+=10) {
+        // for (int i=0; i<360; i+=3) {
+        currentMillis = millis();
+        if (currentMillis - previousMillisLED >= TIME_STEP) {
+            previousMillisLED = currentMillis;
+
             CircuitPlayground.clearPixels();
-            //CircuitPlayground.setBrightness((sinCalc(i)/4)+16);
             for (int j=0; j<10; j++) {
                 lightColorChanger(i, j);
             }
-
-            delay(5);
-            if (timeout) {
-                if (CircuitPlayground.leftButton()) {
-                    if (speed < 10) {
-                        speed++;
-                    }
-                }
-                if (CircuitPlayground.rightButton()) {
-                    if (speed > 1) {
-                        speed--;
-                    }
-                }
-                timeout = false;
+            count += speed;
+            if (count >= 360) {
+                count = 0;
             }
-
-            uint16_t spectrum[32];
-            int avg = 0;
-            CircuitPlayground.mic.fft(spectrum);
-            for(int k=0; k < 32; k++) {             // Add for an average
-                if(spectrum[k] > 255) {
-                    spectrum[k] = 255; // limit outlier data
-                }
-                avg += spectrum[k];
-            }
-            avg/=32;
-
-            CircuitPlayground.setBrightness((avg-16)+16);
         }
-        timeout = true;
+
+        if (currentMillis - previousMillisSpeed >= 500) {
+            previousMillisSpeed = currentMillis;
+
+            if (CircuitPlayground.leftButton()) {
+                if (speed < 10) {
+                    speed++;
+                }
+            }
+            if (CircuitPlayground.rightButton()) {
+                if (speed > 1) {
+                    speed--;
+                }
+            }
+        }
+
+        uint16_t spectrum[32];
+        int avg = 0;
+        CircuitPlayground.mic.fft(spectrum);
+        //creating rolling average
+
+
+        // for(int k=0; k < 32; k++) {// Add for an average
+        //     if(spectrum[k] > 255) {
+        //         spectrum[k] = 255; // limit outlier data
+        //     }
+        //     avg += spectrum[k];
+        // }
+        // avg/=32;
+
+        CircuitPlayground.setBrightness(abs(avg-16)+8);
     }
 }
