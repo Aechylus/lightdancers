@@ -6,26 +6,37 @@
 #define PI 3.14159265358979323846
 #define TIME_STEP 5
 #define BUTTON_DELAY 250
+#define BUFFER_LENGTH 100
+#define FFT_DELAY 10
 
-int speed;
-int count;
-unsigned long previousMillisLED;
-unsigned long previousMillisSpeed;
-unsigned long currentMillis;
+int speed = 3;
+int countLED = 0;
+int countFFT = 0;
+unsigned long previousMillisLED = 0;
+unsigned long previousMillisSpeed = 0;
+unsigned long previousMillisFFT = 0;
+unsigned long currentMillis = 0;
+int buffer[BUFFER_LENGTH];
+int avg = 0;
 
 void setup() {
+    CircuitPlayground.setBrightness(64);
+    for (int i=0; i<BUFFER_LENGTH; i++) {
+        buffer[i] = soundLevelAverage();
+        delay(FFT_DELAY);
+    }
     CircuitPlayground.begin();
+}
 
-    speed = 3;
-    count = 0;
-    previousMillisLED = 0;
-    previousMillisSpeed = 0;
-    currentMillis = 0;
-
+int soundLevelAverage() {
     uint16_t spectrum[32];
-    int avg = 0;
     CircuitPlayground.mic.fft(spectrum);
-    //Serial.begin(9600);
+    avg = 0;
+    for (int i=0; i<32; i++) {
+        avg += (spectrum[i]*(32-i));
+    }
+    avg /= 32;
+    return avg;
 }
 
 int sinCalc(double x) {
@@ -50,50 +61,46 @@ void lightColorChanger(int i, int n) {
     CircuitPlayground.setPixelColor(n, red, green, blue);
 }
 
+void revolutionSpeedController() {
+    if (CircuitPlayground.leftButton()) {
+        if (speed < 10) {
+            speed++;
+        }
+    }
+    if (CircuitPlayground.rightButton()) {
+        if (speed > 1) {
+            speed--;
+        }
+    }
+}
+
 void loop() {
-    // for (int i=0; i<360; i+=3) {
     currentMillis = millis();
     if (currentMillis - previousMillisLED >= TIME_STEP) {
         previousMillisLED = currentMillis;
 
         CircuitPlayground.clearPixels();
         for (int n=0; n<10; n++) {
-            lightColorChanger(count, n);
+            lightColorChanger(countLED, n);
         }
-        count += speed;
-        if (count >= 360) {
-            count = 0;
+        countLED += speed;
+        if (countLED >= 360) {
+            countLED = 0;
         }
     }
 
     if (currentMillis - previousMillisSpeed >= BUTTON_DELAY) {
         previousMillisSpeed = currentMillis;
+        revolutionSpeedController();
+    }
 
-        if (CircuitPlayground.leftButton()) {
-            if (speed < 10) {
-                speed++;
-            }
-        }
-        if (CircuitPlayground.rightButton()) {
-            if (speed > 1) {
-                speed--;
-            }
+    if (currentMillis - previousMillisFFT >= FFT_DELAY) {
+        buffer[countFFT] = soundLevelAverage();
+        countFFT ++;
+        if (countFFT >= BUFFER_LENGTH) {
+            countFFT = 0;
         }
     }
 
-    uint16_t spectrum[32];
-    int avg = 0;
-    CircuitPlayground.mic.fft(spectrum);
-    //creating rolling average
-
-
-    // for(int k=0; k < 32; k++) {// Add for an average
-    //     if(spectrum[k] > 255) {
-    //         spectrum[k] = 255; // limit outlier data
-    //     }
-    //     avg += spectrum[k];
-    // }
-    // avg/=32;
-
-    CircuitPlayground.setBrightness(abs(avg-16)+8);
+    
 }
