@@ -1,7 +1,7 @@
 #include <Adafruit_CircuitPlayground.h>
-#include <stdio.h>
 #include <math.h>
 #include <stdbool.h>
+#include <stdint.h>
 #define PI 3.14159265358979323846
 
 void setup() {
@@ -70,17 +70,6 @@ void loop() {
             avg/=32;
 
             CircuitPlayground.setBrightness((avg-16)+16);
-
-            // for (int a = 0; i<32; a++) {
-            //     Serial.print(a);
-            //     Serial.print(":");
-            //     Serial.print(spectrum[a]);
-            //     Serial.print("   ");
-            //
-            // }
-            // Serial.println("");
-            // Serial.print("Average: ");
-            // Serial.println(avg);
         }
         timeout = true;
     }
