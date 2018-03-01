@@ -35,7 +35,6 @@ void lightColorChanger(int i, int n) {
 
 void loop() {
     int speed = 3;
-    bool timeout = true;
     int count = 0;
     unsigned long previousMillisLED = 0;
     unsigned long previousMillisSpeed = 0;
@@ -47,8 +46,8 @@ void loop() {
             previousMillisLED = currentMillis;
 
             CircuitPlayground.clearPixels();
-            for (int j=0; j<10; j++) {
-                lightColorChanger(i, j);
+            for (int n=0; n<10; n++) {
+                lightColorChanger(count, n);
             }
             count += speed;
             if (count >= 360) {
