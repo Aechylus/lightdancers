@@ -4,11 +4,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 #define PI 3.14159265358979323846
-#define TIME_STEP 15
+#define LED_DELAY 15
 #define BUTTON_DELAY 250
-#define BUFFER_LENGTH 10
 #define FFT_DELAY 4
-#define MAX_BRIGHTNESS 128
+#define BUFFER_LENGTH 10
 
 int speed = 3;
 int countLED = 0;
@@ -18,16 +17,11 @@ unsigned long previousMillisSpeed = 0;
 unsigned long previousMillisFFT = 0;
 unsigned long currentMillis = 0;
 int buffer[BUFFER_LENGTH];
-int avg = 0;
 
 int sinCalc(double x) {
-    double arg;
-    double res;
-    double scaled;
-
-    arg = (x / 360) * 2 * PI;
-    res = sin(arg);
-    scaled = (res*127.5) + 127,5;
+    double arg = (x / 360) * 2 * PI;
+    double res = sin(arg);
+    double scaled = (res*127.5) + 127.5;
 
     return (int)scaled;
 }
@@ -45,7 +39,7 @@ void lightColorChanger(int i, int n) {
 int soundLevelAverage() {
     uint16_t spectrum[32];
     CircuitPlayground.mic.fft(spectrum);
-    avg = 0;
+    int avg = 0;
     avg += spectrum[0] * 2;
     avg += spectrum[1] * 1.5;
     avg += spectrum[2];
@@ -54,7 +48,7 @@ int soundLevelAverage() {
 }
 
 int bufferAverage() {
-    avg = 0;
+    int avg = 0;
     for (int i=0; i<BUFFER_LENGTH; i++) {
         avg += buffer[i];
     }
@@ -75,18 +69,19 @@ void setup() {
 void loop() {
     currentMillis = millis();
     //Light color
-    if (currentMillis - previousMillisLED >= TIME_STEP) {
+    if (currentMillis - previousMillisLED >= LED_DELAY) {
         previousMillisLED = currentMillis;
 
         CircuitPlayground.clearPixels();
         for (int n=0; n<10; n++) {
             lightColorChanger(countLED, n);
         }
-        int brightness = 4*(bufferAverage()-16) > 0 ? 3*(bufferAverage()-16) : 0;
+        int bufferAvg = bufferAverage();
+        int brightness = 4*(bufferAvg-16) > 0 ? 3*(bufferAvg-16) : 0;
         Serial.print(brightness);
         Serial.println();
         CircuitPlayground.setBrightness(brightness);
-        lightColorChanger(countLED, 9);
+        // lightColorChanger(countLED, 9);
         countLED += speed;
         if (countLED >= 360) {
             countLED = 0;
